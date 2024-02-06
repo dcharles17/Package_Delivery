@@ -87,17 +87,15 @@ with open(package_csv, 'r') as csv_file:
         chaining_hash_table.insert(package.id, package)
 
 # Nearest Neighbor method
-def greedy_algorithm(truck, unvisited_set, max_mileage):
-    route = []  # Initialize an empty list for the route
-    current_location = get_address_id(truck.location)
+def greedy_algorithm(truck):
 
-    while unvisited_set:
-        min_distance = float('inf')
+    while truck.packages:
+        min_distance = 20
         nearest_location = None
 
         # Find the nearest location from the current truck location
-        for package in unvisited_set:
-            distance = find_distance(current_location, get_address_id(package.address))
+        for package in truck.packages:
+            distance = find_distance(get_address_id(truck.location), get_address_id(package.address))
 
             # Update the nearest location if the current distance is smaller
             if distance <= min_distance:
@@ -106,16 +104,11 @@ def greedy_algorithm(truck, unvisited_set, max_mileage):
                 # Package is the nearest location
                 nearest_location = package
 
-        # Check if the nearest location exceeds the maximum allowed mileage
-        if min_distance > max_mileage:
-            print(f"Package {nearest_location.id} exceeds max mileage. Skipping.")
-            continue
-
         # Add the nearest location to the route
-        route.append(nearest_location.id)
+        truck.route.append(nearest_location.id)
 
         # Remove assigned packge from the unvisted set
-        unvisited_set.remove(nearest_location)
+        truck.packages.remove(nearest_location)
 
         # Add miles traveled
         truck.milesTraveled += min_distance
@@ -123,13 +116,16 @@ def greedy_algorithm(truck, unvisited_set, max_mileage):
         # Add time it took for delivery
         truck.current_time += datetime.timedelta(hours=min_distance / 18)
 
+        # Update truck location
+        truck.location = nearest_location.address
+
         # Assign the departed time to the package
         nearest_location.depart_time = truck.depart_time
 
         # Assign the delivered time to the package
         nearest_location.delivered_time = truck.current_time
 
-    return route
+    return truck.route
 
 
 # Function to load trucks
@@ -219,20 +215,21 @@ def load_trucks(trucks, packages):
 
     # Assign routes using the greedy algorithm for each truck
     for truck in trucks:
-        truck.route = greedy_algorithm(truck, truck.packages, 70)
-        # Update the total mileage for each truck
-        truck.calculate_total_mileage()
+        truck.route = greedy_algorithm(truck)
+        
 
 # Variable to hold WGU hub address(starting location)
 hub_address = "4001 S 700 E"
 
 # Intances of Truck
 truck1 = Truck(16, 18, hub_address, datetime.timedelta(hours=8))
-truck2 = Truck(16, 18, hub_address, datetime.timedelta(hours=9, minutes = 5))
-truck3 = Truck(16, 18, hub_address, datetime.timedelta(hours=12, minutes=20))
+truck2 = Truck(16, 18, hub_address, datetime.timedelta(hours=9, minutes =5))
+truck3 = Truck(16, 18, hub_address, datetime.timedelta(hours=10, minutes=20))
 
 # Load the trucks with the Greedy Algorithm
 load_trucks([truck1, truck2, truck3], packages)
+
+
 
 class Main:
     # Display route and total mileage for each truck
